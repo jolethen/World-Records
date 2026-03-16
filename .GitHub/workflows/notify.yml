@@ -1,0 +1,33 @@
+name: New Record Notification
+on:
+  push:
+    paths:
+      - 'data.json'
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Send to Discord
+        run: |
+          # Grabs the last entry added to the JSON
+          TITLE=$(jq -r '.[-1].title' data.json)
+          VALUE=$(jq -r '.[-1].value' data.json)
+          PLAYER=$(jq -r '.[-1].holder' data.json)
+          TIER=$(jq -r '.[-1].tier' data.json)
+          
+          curl -X POST -H "Content-Type: application/json" \
+          -d "{
+            \"embeds\": [{
+              \"title\": \"🏆 New World Record Logged!\",
+              \"description\": \"**$TITLE** has been claimed.\",
+              \"color\": 3066993,
+              \"fields\": [
+                {\"name\": \"Record\", \"value\": \"$VALUE\", \"inline\": true},
+                {\"name\": \"Player\", \"value\": \"$PLAYER\", \"inline\": true},
+                {\"name\": \"Tier\", \"value\": \"$TIER\", \"inline\": true}
+              ],
+              \"footer\": {\"text\": \"Check it out at your website!\"}
+            }]
+          }" ${{ secrets.DISCORD_WEBHOOK }}
